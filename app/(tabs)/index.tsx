@@ -1,4 +1,4 @@
-import React, { useState, useRef, Children} from 'react';
+import React, { useState, useRef, Children, useEffect} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 
@@ -6,17 +6,62 @@ const App = () => {
 
     // State and refs to manage time and stopwatch status
     const [time, setTime] = useState(0);
+    const [ms, setMs] = useState(0);
+    const[seconds, setSeconds] = useState(0);
+    const [minutes, setMinutes] = useState(0);
+    const [hours, setHours] = useState(0);
     const [running, setRunning] = useState(false);
     const [laps, setLaps] = useState([]);
-    const intervalRef = useRef(0);
+    const intervalRef = useRef(null);
     const startTimeRef = useRef(0);
     const id = useRef(0);
+
+    useEffect (() =>  {
+        // Hours calculation
+        setHours(Math.floor(time / 3600000));
+
+        // Minutes calculation
+        setMinutes(Math.floor((time % 360000) / 60000));
+
+        // Seconds calculation
+        setSeconds(Math.floor((time % 60000) / 1000));
+
+        // Milliseconds calculation
+        setMs(time % 1000);
+
+    }, [time])
+
+    // useEffect (() =>  {
+    //     if (ms == 1000) {
+    //         startTimeRef.current = Date.now() - time * 1000;
+    //         setMs(0);
+    //         setSeconds(seconds + 1);
+    //     }
+    // }, [ms]);
+
+    // useEffect (() =>  {
+    //     if(seconds == 60) {
+    //         setSeconds(0);
+    //         setMinutes(minutes + 1);
+    //     }
+    // }, [seconds]);
+
+    // useEffect (() =>  {
+    //     if(minutes == 2) {
+    //         setMinutes(0);
+    //         setHours(hours + 1);
+    //     }
+    // }, [minutes]);
+
+
     // Function to start the stopwatch
     const startStopwatch = () => {
-        startTimeRef.current = Date.now() - time * 1000;
+        startTimeRef.current = Date.now() - time;
         intervalRef.current = setInterval(() => {
+            // setTime(
+            //     (Date.now() - startTimeRef.current) / 1000, );
             setTime(
-                (Date.now() - startTimeRef.current) / 1000, );
+                (Date.now() - startTimeRef.current) );
         }, 10);
         setRunning(true);
     };
@@ -39,9 +84,11 @@ const App = () => {
     }
 
     const lapStopwatch = () => {
-        setLaps(laps => [...laps, {id: id.current, time: time}])
+        setLaps(laps => [...laps, {id: id.current, hours: hours, minutes: minutes, seconds: seconds, ms: ms}])
         id.current++;
     }
+
+
 
     // const checkTime = (tempTime) => {
     //   setTime(tempTime.toFixed(2));
@@ -49,11 +96,10 @@ const App = () => {
 
     // Function to resume the stopwatch
     const resumeStopwatch = () => {
-        startTimeRef.current = Date.now() - time * 1000;
+        startTimeRef.current = Date.now() - time;
         intervalRef.current = setInterval(() => {
             setTime(
-                (Date.now() - startTimeRef.current) / 1000);
-            console.log(time)
+                (Date.now() - startTimeRef.current) );
         }, 10);
         setRunning(true);
     };
@@ -66,7 +112,8 @@ const App = () => {
             <Text style={styles.subHeader}>
                 Stop Watch On Top
             </Text>
-            <Text style={styles.timeText}>{time.toFixed(3)}s</Text>
+            {/* <Text style={styles.timeText}>{time.toFixed(3)}s</Text> */}
+            <Text style={styles.timeText}>{hours.toString().padStart(2, '0')} : {minutes.toString().padStart(2, '0')} : {seconds.toString().padStart(2, '0')} : {ms.toString().padStart(3, '0')}</Text>
             <View style={styles.buttonContainer}>
                 {running ? (
                     <>
@@ -115,7 +162,7 @@ const App = () => {
             <ScrollView>
             {laps.map((lap) => (
                 <View key={lap.id}>
-                    <Text style={styles.timeText} >{lap.time}s</Text>
+                    <Text style={styles.timeText}>{lap.hours.toString().padStart(2, '0')} : {lap.minutes.toString().padStart(2, '0')} : {lap.seconds.toString().padStart(2, '0')} : {lap.ms.toString().padStart(3, '0')}</Text>
                     <TouchableOpacity style={[styles.button, styles.resumeButton]} onPress={() => deleteLap(lap.id)}>
                         <Text style={styles.buttonText}>
                             Delete
@@ -128,6 +175,8 @@ const App = () => {
         </View>
     );
 };
+
+
 
 const styles = StyleSheet.create({
     container: {
